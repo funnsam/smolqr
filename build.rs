@@ -40,9 +40,13 @@ fn main() {
     for n in 2..=255 {
         let mut this = vec![0_u8; n as usize + 1];
 
-        this[0] = last[0] + n - 1;
+        let j = last[0] as usize + n as usize - 1;
+        this[0] = (j % 256 + j / 256) as u8;
+
         for (i, e) in this.iter_mut().enumerate().skip(1).take(n as usize - 1) {
-            *e = log[(antilog[(last[i - 1]) as usize] ^ antilog[(last[i] + n - 1) as usize]) as usize];
+            let j = last[i] as usize + n as usize - 1;
+
+            *e = log[(antilog[last[i - 1] as usize] ^ antilog[j % 256 + j / 256]) as usize];
         }
 
         src.push_str("&[");
