@@ -1,7 +1,8 @@
 #![feature(array_chunks)]
 #![feature(iter_array_chunks)]
 
-pub mod encode;
+mod encode;
+mod err_corr;
 
 struct BitsWriter {
     pub bits: Vec<u8>,
