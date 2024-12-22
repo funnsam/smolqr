@@ -1,4 +1,4 @@
-mod alphanumeric_table;
+pub(crate) mod alphanumeric_table;
 
 use crate::*;
 
@@ -139,15 +139,15 @@ fn test_numeric() {
 }
 
 fn encode_alphanumeric(string: &str, buffer: &mut BitsWriter) -> Option<()> {
-    use alphanumeric_table::LUT;
+    use alphanumeric_table::get;
 
     let mut iter = string.chars().array_chunks::<2>();
     for p in &mut iter {
-        buffer.write_bits(11, *LUT.get(&p[0])? as usize * 45 + *LUT.get(&p[1])? as usize);
+        buffer.write_bits(11, get(p[0])? as usize * 45 + get(p[1])? as usize);
     }
 
     if let Some(p) = iter.into_remainder() {
-        buffer.write_bits(6, *LUT.get(&p.as_slice()[0])? as usize);
+        buffer.write_bits(6, get(p.as_slice()[0])? as usize);
     }
 
     Some(())
