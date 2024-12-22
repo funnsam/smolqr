@@ -16,7 +16,7 @@ impl QrMatrix {
         }
     }
 
-    pub fn generate(string: &str, mode: Mode, version: Version, ec: ErrorCorrectLv) -> Self {
+    pub fn generate(string: &[u8], mode: Mode, version: Version, ec: ErrorCorrectLv) -> Self {
         let (mut mat, functions) = generate_unmasked_matrix(
             version,
             &crate::structure::structure(

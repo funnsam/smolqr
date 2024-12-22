@@ -69,7 +69,7 @@ fn main() {
 
     let ec = args.ec.into();
     let mode = args.mode.map_or_else(
-        || Mode::best_mode(&args.string),
+        || Mode::best_mode(args.string.as_bytes()),
         |m| m.into(),
     );
     let version = args.version.map_or_else(
@@ -77,7 +77,7 @@ fn main() {
         |m| Version::new(m),
     );
 
-    let mat = QrMatrix::generate(&args.string, mode, version, ec);
+    let mat = QrMatrix::generate(args.string.as_bytes(), mode, version, ec);
 
     match args.output {
         OutputMode::Print => print!("{mat}"),

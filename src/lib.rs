@@ -26,12 +26,12 @@ impl Mode {
         }
     }
 
-    pub fn best_mode(string: &str) -> Self {
-        if !string.chars().any(|c| !c.is_ascii_digit()) {
+    pub fn best_mode(string: &[u8]) -> Self {
+        if !string.iter().any(|c| !(*c as char).is_ascii_digit()) {
             return Self::Numeric;
         }
 
-        if !string.chars().any(|c| encode::alphanumeric_table::get(c).is_none()) {
+        if !string.iter().any(|c| encode::alphanumeric_table::get(*c).is_none()) {
             return Self::Alphanumeric;
         }
 
