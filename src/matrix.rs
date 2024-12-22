@@ -256,7 +256,6 @@ fn apply_best_mask(mat: &mut QrMatrix, functions: &QrMatrix, version: Version, e
             best_mask = m;
             best_penalty = penalty;
         }
-        println!("{m} {penalty}");
 
         try_mat.bitmap.copy_from_slice(&mat.bitmap);
     }
@@ -311,7 +310,6 @@ fn calculate_penalty(mat: &QrMatrix) -> usize {
 
         count = 0;
     }
-    println!("  {penalty}");
 
     // 2x2 overlapping squares
     for y in 0..mat.size() - 1 {
@@ -326,7 +324,6 @@ fn calculate_penalty(mat: &QrMatrix) -> usize {
             }
         }
     }
-    println!("  {penalty}");
 
     // finder 1-1-3-1-1 patterns in rows
     for y in 0..mat.size() {
@@ -389,13 +386,11 @@ fn calculate_penalty(mat: &QrMatrix) -> usize {
             }
         }
     }
-    println!("  {penalty}");
 
     // black ratio
     let percentage = black_count * 100 / (mat.size() * mat.size());
     let prev = (percentage / 5 * 5) as isize;
     penalty += (prev - 50).abs().min((prev - 45).abs()) as usize * 2;
-    println!("  {penalty}");
 
     penalty
 }
