@@ -25,8 +25,7 @@ impl QrMatrix {
                 ec
             ),
         );
-        let mask = apply_best_mask(&mut mat, &functions);
-        place_format_and_version(&mut mat, version, ec, mask);
+        let mask = apply_best_mask(&mut mat, &functions, version, ec);
 
         mat
     }
@@ -244,24 +243,25 @@ fn place_data(mat: &mut UnfinishedMatrix, cursor: &mut (usize, usize, bool, bool
     }
 }
 
-fn apply_best_mask(mat: &mut QrMatrix, functions: &QrMatrix) -> usize {
+fn apply_best_mask(mat: &mut QrMatrix, functions: &QrMatrix, version: Version, ec: ErrorCorrectLv) -> usize {
     let mut try_mat = mat.clone();
     let mut best_mask = 0;
     let mut best_penalty = usize::MAX;
 
     for m in 0..8 {
-        apply_mask(&mut try_mat, functions, m);
+        apply_mask(&mut try_mat, functions, version, ec, m);
         let penalty = calculate_penalty(&try_mat);
 
         if best_penalty > penalty {
             best_mask = m;
             best_penalty = penalty;
         }
+        println!("{m} {penalty}");
 
         try_mat.bitmap.copy_from_slice(&mat.bitmap);
     }
 
-    apply_mask(mat, functions, best_mask);
+    apply_mask(mat, functions, version, ec, best_mask);
     best_mask
 }
 
@@ -276,8 +276,11 @@ fn calculate_penalty(mat: &QrMatrix) -> usize {
         for x in 0..mat.size() {
             let c = mat.get(x, y);
             black_count += c as usize;
-            count += (color == c) as usize;
-            color = c;
+            if color != c {
+                count = 0;
+                color = c;
+            }
+            count += 1;
 
             if count == 5 {
                 penalty += 3;
@@ -285,16 +288,19 @@ fn calculate_penalty(mat: &QrMatrix) -> usize {
                 penalty += 1;
             }
         }
+
+        count = 0;
     }
 
     // 5 in a column
-    count = 0;
-    color = false;
     for x in 0..mat.size() {
         for y in 0..mat.size() {
             let c = mat.get(x, y);
-            count += (color == c) as usize;
-            color = c;
+            if color != c {
+                count = 0;
+                color = c;
+            }
+            count += 1;
 
             if count == 5 {
                 penalty += 3;
@@ -302,7 +308,10 @@ fn calculate_penalty(mat: &QrMatrix) -> usize {
                 penalty += 1;
             }
         }
+
+        count = 0;
     }
+    println!("  {penalty}");
 
     // 2x2 overlapping squares
     for y in 0..mat.size() - 1 {
@@ -317,6 +326,7 @@ fn calculate_penalty(mat: &QrMatrix) -> usize {
             }
         }
     }
+    println!("  {penalty}");
 
     // finder 1-1-3-1-1 patterns in rows
     for y in 0..mat.size() {
@@ -337,7 +347,7 @@ fn calculate_penalty(mat: &QrMatrix) -> usize {
                     && !mat.get(x - 3, y)
                     && !mat.get(x - 4, y)
                 ) || (
-                    x + 7 < mat.size() - 4
+                    x + 10 < mat.size()
                     && !mat.get(x + 7, y)
                     && !mat.get(x + 8, y)
                     && !mat.get(x + 9, y)
@@ -368,7 +378,7 @@ fn calculate_penalty(mat: &QrMatrix) -> usize {
                     && !mat.get(x, y - 3)
                     && !mat.get(x, y - 4)
                 ) || (
-                    y + 7 < mat.size() - 4
+                    y + 10 < mat.size()
                     && !mat.get(x, y + 7)
                     && !mat.get(x, y + 8)
                     && !mat.get(x, y + 9)
@@ -379,16 +389,18 @@ fn calculate_penalty(mat: &QrMatrix) -> usize {
             }
         }
     }
+    println!("  {penalty}");
 
     // black ratio
     let percentage = black_count * 100 / (mat.size() * mat.size());
     let prev = (percentage / 5 * 5) as isize;
-    penalty += (prev - 50).abs().min((prev - 45).abs()) as usize * 10;
+    penalty += (prev - 50).abs().min((prev - 45).abs()) as usize * 2;
+    println!("  {penalty}");
 
     penalty
 }
 
-fn apply_mask(mat: &mut QrMatrix, functions: &QrMatrix, mask: usize) {
+fn apply_mask(mat: &mut QrMatrix, functions: &QrMatrix, version: Version, ec: ErrorCorrectLv, mask: usize) {
     for y in 0..mat.size() {
         for x in 0..mat.size() {
             if !functions.get(x, y) && match mask {
@@ -406,6 +418,8 @@ fn apply_mask(mat: &mut QrMatrix, functions: &QrMatrix, mask: usize) {
             }
         }
     }
+
+    place_format_and_version(mat, version, ec, mask);
 }
 
 fn place_format_and_version(mat: &mut QrMatrix, version: Version, ec: ErrorCorrectLv, mask: usize) {
